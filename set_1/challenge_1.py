@@ -29,6 +29,10 @@ def test_hex_to_base64():
 
 def hex_to_base64(hex_):
     unhexlified_bytes = binascii.a2b_hex(hex_)
+
+    # print(unhexlified_bytes.decode('ascii'))
+    # I'm killing your brain like a poisonous mushroom
+
     b64_bytes = base64.b64encode(unhexlified_bytes)
     return b64_bytes.decode('ascii')
 
