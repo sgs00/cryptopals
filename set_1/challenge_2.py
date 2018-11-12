@@ -49,6 +49,22 @@ def string_xor(op1, op2):
     return bytes_xor.hex()
 
 
+def test_string_xor2():
+    op1 = '1c0111001f010100061a024b53535009181c'
+    op2 = '686974207468652062756c6c277320657965'
+    res = '746865206b696420646f6e277420706c6179'
+    assert string_xor2(op1, op2) == res
+
+
+def string_xor2(op1, op2):
+
+    if len(op1) != len(op2):
+        raise ValueError("Operands must have the same length.")
+
+    return format(int(op1, 16) ^ int(op2, 16), 'x')
+
+
 if __name__ == '__main__':
     test_string_xor()
+    test_string_xor2()
     print(string_xor(sys.argv[1], sys.argv[2]))
