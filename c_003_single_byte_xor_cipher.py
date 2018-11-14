@@ -25,7 +25,7 @@ from collections import Counter
 import os
 
 
-# This dictionary is constructed using the function `get_frequencies` below
+# This dictionary is obtained running the function `get_frequencies` below
 frequencies = {
     'B': 0.016047959168228293, 'D': 0.03871183735737418, 'T': 0.08938126949659495, 'X': 0.0019135048594134572,
     'F': 0.021815103969122528, 'M': 0.025263217360184446, 'Y': 0.017213606152473405, 'J': 0.002197788956104563,
@@ -42,7 +42,7 @@ def get_frequencies():
     here = os.path.realpath(os.path.dirname(__file__))
 
     d = dict()
-    with open(os.path.join(here, 'challenge_3_english_monograms.txt')) as f:
+    with open(os.path.join(here, 'c_003_english_monograms.txt')) as f:
         for line in f.readlines():
             k, v = line.split()
             d[k] = int(v)

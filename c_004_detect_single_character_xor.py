@@ -13,7 +13,7 @@ Find it.
 
 import os
 
-from challenge_3 import score_plain_english, brute_force
+from c_003_single_byte_xor_cipher import score_plain_english, brute_force
 
 
 def run():
@@ -21,8 +21,8 @@ def run():
 
     candidate_key = candidate_decrypted = score = None
 
-    with open(os.path.join(here, 'challenge_4_4.txt')) as f:
-        for line in f.readlines():
+    with open(os.path.join(here, 'c_004_4.txt')) as f:
+        for line in f:
             line = line.strip()
             for maybe_key, maybe_decrypted in brute_force(line):
                 _score = score_plain_english(maybe_decrypted)
