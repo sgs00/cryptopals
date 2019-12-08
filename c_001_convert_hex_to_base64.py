@@ -25,6 +25,9 @@ def hex_to_base64(hex_string):
     >>> given_b64 = 'SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t'
 
     >>> assert(hex_to_base64(given_hex) == given_b64)
+
+    # easter egg
+    >>> assert(binascii.a2b_hex(given_hex) == b"I'm killing your brain like a poisonous mushroom")
     """
 
     _bytes = binascii.a2b_hex(hex_string)
