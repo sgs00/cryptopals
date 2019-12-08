@@ -13,58 +13,33 @@ If your function works properly, then when you feed it the string:
 
 ... should produce:
 746865206b696420646f6e277420706c6179
-
 """
-
-import binascii
-import sys
-
-
-def test_string_xor():
-    op1 = '1c0111001f010100061a024b53535009181c'
-    # print(binascii.a2b_hex(op1))
-    # b'\x1c\x01\x11\x00\x1f\x01\x01\x00\x06\x1a\x02KSSP\t\x18\x1c'
-
-    op2 = '686974207468652062756c6c277320657965'
-    # print(binascii.a2b_hex(op2))
-    # b"hit the bull's eye"
-
-    res = '746865206b696420646f6e277420706c6179'
-    # print(binascii.a2b_hex(res))
-    # b"the kid don't play"
-
-    assert string_xor(op1, op2) == res
 
 
 def string_xor(op1, op2):
+    """
+    >>> assert(string_xor('00', '0102'))
+    Traceback (most recent call last):
+    ValueError: Operands' lenghts do not match
+
+    >>> a = "1c0111001f010100061a024b53535009181c"
+    >>> b = "686974207468652062756c6c277320657965"
+    >>> result = "746865206b696420646f6e277420706c6179"
+
+    >>> assert(string_xor(a, b) == result)
+    
+    # easter egg
+    >>> import binascii
+    >>> assert(binascii.a2b_hex(b) == b"hit the bull's eye")
+    >>> assert(binascii.a2b_hex(result) == b"the kid don't play")    
+    """
 
     if len(op1) != len(op2):
-        raise ValueError("Operands must have the same length.")
+        raise ValueError("Operand's lenghts do not match")
 
-    op1 = binascii.a2b_hex(op1)
-    op2 = binascii.a2b_hex(op2)
-
-    bytes_xor = bytes(a ^ b for a, b in zip(op1, op2))
-
-    return bytes_xor.hex()
-
-
-def test_string_xor2():
-    op1 = '1c0111001f010100061a024b53535009181c'
-    op2 = '686974207468652062756c6c277320657965'
-    res = '746865206b696420646f6e277420706c6179'
-    assert string_xor2(op1, op2) == res
-
-
-def string_xor2(op1, op2):
-
-    if len(op1) != len(op2):
-        raise ValueError("Operands must have the same length.")
-
-    return format(int(op1, 16) ^ int(op2, 16), 'x')
+    return format(int(op1, base=16) ^ int(op2, base=16), 'x')
 
 
 if __name__ == '__main__':
-    test_string_xor()
-    test_string_xor2()
-    print(string_xor(sys.argv[1], sys.argv[2]))
+    import doctest
+    doctest.testmod()
