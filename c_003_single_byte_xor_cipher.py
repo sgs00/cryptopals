@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 """
 https://cryptopals.com/sets/1/challenges/3
 
@@ -17,106 +15,68 @@ Evaluate each output and choose the one with the best score.
 
 Achievement Unlocked
 You now have our permission to make "ETAOIN SHRDLU" jokes on Twitter.
-
 """
 
 import binascii
 from collections import Counter
-import os
 
+from c_002_fixed_xor import string_xor
 
-# This dictionary is obtained running the function `get_frequencies` below
+# Credits:
+# http://www.data-compression.com/english.html
+# for the Statistical Distributions of English Text (space included)
+# https://crypto.stackexchange.com/a/56477
+# for allowing me to discover the Bhattacharyya coefficient
+# further interesting reading: http://norvig.com/mayzner.html
+
 frequencies = {
-    'B': 0.016047959168228293, 'D': 0.03871183735737418, 'T': 0.08938126949659495, 'X': 0.0019135048594134572,
-    'F': 0.021815103969122528, 'M': 0.025263217360184446, 'Y': 0.017213606152473405, 'J': 0.002197788956104563,
-    'U': 0.026815809362304373, 'H': 0.04955707280570641, 'C': 0.03164435380900101, 'K': 0.008086975227142329,
-    'N': 0.07172184876283856, 'Q': 0.0010402453014323196, 'I': 0.0732511860723129, 'S': 0.06728203117491646,
-    'W': 0.018253618950416498, 'G': 0.020863354250923158, 'P': 0.020661660788966266, 'E': 0.1209652247516903,
-    'R': 0.0633271013284023, 'Z': 0.001137563214703838, 'A': 0.08551690673195275, 'L': 0.04206464329306453,
-    'V': 0.01059346274662571, 'O': 0.07467265410810447, }
-
-
-def get_frequencies():
-    # http://practicalcryptography.com/cryptanalysis/letter-frequencies-various-languages/english-letter-frequencies/
-    # http://practicalcryptography.com/media/cryptanalysis/files/english_monograms.txt
-    here = os.path.realpath(os.path.dirname(__file__))
-
-    d = dict()
-    with open(os.path.join(here, 'c_003_english_monograms.txt')) as f:
-        for line in f.readlines():
-            k, v = line.split()
-            d[k] = int(v)
-
-    s = sum(d.values())
-    e = {k: v/s for k, v in d.items()}
-
-    assert abs(1 - sum(e.values())) < 0.0001
-    return e
-
-
-def score_plain_english(text):
-    """
-    Score is a tuple: (number_of_non_AZ_characters, chi_square)
-    Lower is better.
-
-    White space' s frequency  is not given, but being a very common (and valid) character, I'm not
-     considering it when incrementing non_AZ_characters
-
-    Further interesting reading:
-    # https://crypto.stackexchange.com/questions/30209/developing-algorithm-for-detecting-plain-text-via-frequency-analysis
-    # http://norvig.com/mayzner.html
-    """
-
-    text = text.upper()
-    counter = Counter(text)
-
-    chi_sq = skipped = 0
-    for t in text:
-        try:
-            observed = counter[t]
-            expected = frequencies[t] * len(text)
-            chi_sq += (observed-expected)**2 / expected
-        except KeyError:
-            if t != ' ':
-                skipped += 1
-
-    return skipped, chi_sq
+    'a': 0.0651738, 'b': 0.0124248, 'c': 0.0217339, 'd': 0.0349835, 'e': 0.1041442,
+    'f': 0.0197881, 'g': 0.0158610, 'h': 0.0492888, 'i': 0.0558094, 'j': 0.0009033,
+    'k': 0.0050529, 'l': 0.0331490, 'm': 0.0202124, 'n': 0.0564513, 'o': 0.0596302,
+    'p': 0.0137645, 'q': 0.0008606, 'r': 0.0497563, 's': 0.0515760, 't': 0.0729357,
+    'u': 0.0225134, 'v': 0.0082903, 'w': 0.0171272, 'x': 0.0013692, 'y': 0.0145984,
+    'z': 0.0007836, ' ': 0.1918182, }
 
 
 def brute_force(encrypted):
+    """
+    >>> encoded = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
+    >>> decoded = brute_force(encoded)[0]['decoded']
+    >>> assert(decoded == "Cooking MC's like a pound of bacon")
+    """
 
-    assert len(encrypted) % 2 == 0
-    n_bytes = int(len(encrypted) / 2)
+    length = int(len(encrypted) / 2)
+    scores = list()
 
-    last_ascii = ord('ÿ')
-    assert last_ascii == 255
+    for k in keys_generator(length):
+        maybe_decrypted = string_xor(encrypted, k)
+        scores.append({'key_hex': k[:2],
+                       'score': englishness(maybe_decrypted),
+                       'decoded': bytearray.fromhex(maybe_decrypted).decode()})
 
-    for i in range(last_ascii+1):
-        maybe_key = bytes([i] * n_bytes)
-        maybe_decrypted = [a ^ b for a, b in zip(maybe_key, binascii.a2b_hex(encrypted))]
-        maybe_decrypted = bytes(maybe_decrypted)
-        try:
-            maybe_decrypted = maybe_decrypted.decode('ascii')
-        except UnicodeDecodeError:
-            # skipping, contains unprintable chars
-            continue
-
-        yield maybe_key, maybe_decrypted
+    return sorted(scores, key=lambda k: k['score'], reverse=True)
 
 
-def run():
-    encrypted = '1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736'
+def keys_generator(length,
+                   first_ascii=ord(' '), # decimal 32
+                   last_ascii=ord('~')): # decimal 126
+    for i in range(first_ascii, last_ascii+1):
+        # hex(16) == '0x10'
+        yield hex(i)[2:] * length
 
-    results = dict()
-    for maybe_key, maybe_decripted in brute_force(encrypted):
-        results[maybe_decripted] = score_plain_english(maybe_decripted)
 
-    for k, v in sorted(results.items(), key=lambda x: x[1]):
-        print(k)
-        print('score: ' + str(v))
-        print()
+def englishness(hex_str):
+    length = len(hex_str) / 2
+    txt = bytearray.fromhex(hex_str).decode()
+    cnt = Counter(txt)
+    bhatta = 0
+    for c, n_observed in cnt.items():
+        p = n_observed / length
+        q = frequencies.get(c, 0)
+        bhatta += (p * q) ** 0.5
+    return bhatta
 
 
 if __name__ == '__main__':
-    run()
-
+    import doctest
+    doctest.testmod()
